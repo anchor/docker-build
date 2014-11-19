@@ -22,7 +22,6 @@ get marquise
 get vaultaire-query
 get vaultaire-control
 get chevalier-common
-get borel
 
 cd /
 
@@ -36,4 +35,3 @@ cabal install -j \
 	/src/vaultaire-query \
 	/src/vaultaire-control \
 	/src/chevalier-common \
-	/src/borel 
