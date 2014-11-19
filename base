@@ -32,7 +32,7 @@ baseline () {
 	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t \
 		-v ${PWD}/cache:/src:rw \
 		"$DOCKER_REGISTRY/afcowie/haskell" \
-		baseline
+		src/baseline
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [[ $RC -ne 0 ]]; then
 		echo "Build returned nonzero exit status, bailing out."
@@ -52,7 +52,7 @@ dependencies () {
 	if [ cache/.stamp/dependencies -nt cache/.stamp/baseline ] ; then
 		return
 	fi
-	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline dependencies 
+	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/dependencies 
 
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [[ $RC -ne 0 ]]; then
@@ -72,7 +72,7 @@ release () {
 	if [ cache/.stamp/release -nt cache/.stamp/dependencies ] ; then
 		return
 	fi
-	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/afcowie/debian:jessie release
+	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/afcowie/debian:jessie src/release
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [[ $RC -ne 0 ]]; then
 		echo "Build returned nonzero exit status, bailing out."
