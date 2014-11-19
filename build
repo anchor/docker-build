@@ -10,19 +10,53 @@ set +e
 #   release       -- artifact copying and usage
 # See sample implementation for each based on the included sample_* files
 
+BRANCH=`git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'`
+
+git clone -b $BRANCH  https://github.com/anchor/docker-base.git 
+
 . docker-base/base
 
-NAME=$1
-DOCKER_REGISTRY=$2
-VERSION=$3
-DOCKER_OPTS="$4"
+for i in "$@"
+do
+case $i in
+    -n=*|--name=*)
+    NAME="${i#*=}"
 
-if [ -z "$NAME" -z "$DOCKER_REGISTRY" -o -z "$VERSION" ]; then
-  echo "Usage: $0 NAME DOCKER_REGISTRY [VERSION] [DOCKER OPTS]"
+    ;;
+    -d=*|--docker_registry=*)
+    DOCKER_REGISTRY="${i#*=}"
+    ;;
+
+    -o=*|--docker-opts=*)
+    DOCKER_OPTS="${i#*=}"
+    ;;
+
+    -v=*|--version=*)
+    VERSION="${i#*=}"
+    ;;
+    *)
+    ;;
+esac
+done
+
+
+if [ -z "$VERSION" ]; then
+  VERSION=$(git show-ref refs/heads/master | awk '{print $1}')
+fi
+
+echo Name = $NAME
+echo Options = $DOCKER_OPTS
+echo Docker Registry = $DOCKER_REGISTRY
+echo Version = $VERSION
+
+
+if [ -z "$DOCKER_REGISTRY" -o -z "$VERSION" ]; then
+  echo "Usage: $0 -n=NAME -d=DOCKER_REGISTRY [-v=VERSION] [-o=DOCKER_OPTS]"
   echo
   echo "VERSION defaults to \$GIT_COMMIT"
   exit 1
 fi
+
 
 initialize
 baseline
