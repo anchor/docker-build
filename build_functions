@@ -1,0 +1,135 @@
+#!/bin/sh
+set -x
+set -e
+set -u
+
+if [ -z "$VERSION" ]; then
+  VERSION=$GIT_COMMIT
+  # We shouldn't be using the GIT_COMMIT for our versions; this is the *build script*
+  # ID, we should use the ID of the software we're building! Something like this:
+  #
+  # VERSION=$(git --git-dir=$REPO/.git show-ref refs/heads/master | awk '{print $1}')
+fi
+
+IMAGE_NAME="${NAME}-${VERSION}"
+REPO="cache/${NAME}"
+
+if [ -z "$NAME" -z "$DOCKER_REGISTRY" -o -z "$VERSION" ]; then
+  echo "Usage: $0 NAME DOCKER_REGISTRY [VERSION] [DOCKER OPTS]"
+  echo
+  echo "VERSION defaults to \$GIT_COMMIT"
+  exit 1
+fi
+
+set -u
+
+rsync -a src/ cache
+
+#
+# Install a base system
+#
+
+initialize () {
+	if [ -f cache/.stamp/initialize ] ; then
+		return
+	fi
+	docker $DOCKER_OPTS pull $DOCKER_REGISTRY/afcowie/debian:jessie
+	docker $DOCKER_OPTS pull $DOCKER_REGISTRY/afcowie/haskell:latest
+	touch cache/.stamp/initialize
+}
+
+
+baseline () {
+	if [ cache/.stamp/baseline -nt cache/.stamp/initalize ] ; then
+		return
+	fi
+
+	# Kill the container if it's already running.
+	docker $DOCKER_OPTS stop "$IMAGE_NAME" || true
+	docker $DOCKER_OPTS rm "$IMAGE_NAME" || true
+
+	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t \
+		-v ${PWD}/cache:/src:rw \
+		"$DOCKER_REGISTRY/afcowie/haskell" \
+		baseline
+	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
+	if [[ $RC -ne 0]]; then
+		echo "Build returned nonzero exit status, bailing out."
+	fi
+	docker $DOCKER_OPTS commit "$IMAGE_NAME" "$DOCKER_REGISTRY/engineering/${NAME}:baseline"
+	docker $DOCKER_OPTS rm "$IMAGE_NAME"
+
+	touch cache/.stamp/baseline
+}
+
+
+#
+# Update (or initally clone) source code and build dependencies in volume
+#
+
+dependencies () {
+	if [ cache/.stamp/dependencies -nt cache/.stamp/baseline ] ; then
+		return
+	fi
+	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline dependencies 
+
+	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
+	if [[ $RC -ne 0]]; then
+		echo "Build returned nonzero exit status, bailing out."
+	fi
+	docker $DOCKER_OPTS commit "$IMAGE_NAME" "$DOCKER_REGISTRY/engineering/${NAME}:dependencies"
+	docker $DOCKER_OPTS rm "$IMAGE_NAME"
+
+	touch cache/.stamp/dependencies
+}
+
+#
+# Extract the binary artifacts
+#
+
+release () {
+	if [ cache/.stamp/release -nt cache/.stamp/dependencies ] ; then
+		return
+	fi
+	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/afcowie/debian:jessie release
+	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
+	if [[ $RC -ne 0]]; then
+		echo "Build returned nonzero exit status, bailing out."
+	fi
+	docker $DOCKER_OPTS commit "$IMAGE_NAME" "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}"
+	docker $DOCKER_OPTS rm "$IMAGE_NAME"
+	touch cache/.stamp/release
+}
+
+publish () {
+	if [ cache/.stamp/publish -nt cache/.stamp/release ] ; then
+		return
+	fi
+	BUILD=$(git --git-dir=$REPO/.git show-ref refs/heads/master | awk '{print $1}')
+	# Tag the built image with the SHA from the software repo.
+	docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
+		"$DOCKER_REGISTRY/engineering/${NAME}:${BUILD}"
+	# Tag the built image with "latest".
+	docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
+		"$DOCKER_REGISTRY/engineering/${NAME}:latest"
+	# Push these tags to the repo.
+	docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:${BUILD}"
+	docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:latest"
+
+	touch cache/.stamp/publish 
+}
+
+haddock () {
+	tar -czf ${NAME}-documentation.tar.gz cache/.cabal/share/doc
+}
+
+get () { 
+        if [ -d $1/.git ] ; then
+                cd $1
+                git pull
+                cd ..
+        else
+		git clone https://github.com/anchor/$1.git
+        fi
+}
+

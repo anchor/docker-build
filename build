@@ -1,0 +1,32 @@
+#!/bin/sh
+
+set +x
+set +e
+
+# Run this command to do all the things
+# Local requirements: commands for the following steps: 
+#   baseline      -- distro images
+#   dependencies  -- other haskell packages, from git
+#   release       -- artifact copying and usage
+# See sample implementation for each based on the included sample_* files
+
+. docker-base/base
+
+NAME=$1
+DOCKER_REGISTRY=$2
+VERSION=$3
+DOCKER_OPTS="$4"
+
+if [ -z "$NAME" -z "$DOCKER_REGISTRY" -o -z "$VERSION" ]; then
+  echo "Usage: $0 NAME DOCKER_REGISTRY [VERSION] [DOCKER OPTS]"
+  echo
+  echo "VERSION defaults to \$GIT_COMMIT"
+  exit 1
+fi
+
+initialize
+baseline
+dependencies
+release
+publish
+haddock

@@ -1,0 +1,39 @@
+#!/bin/sh
+set -x
+set -e
+
+export HOME=/src
+
+# Git-based cabal source files
+# Helper function: get github/anchor/<source>
+
+export HOME=/src
+
+exec > /src/dependencies.log
+exec 2>&1
+
+export PATH=/src/.cabal/bin:$PATH
+cabal update
+
+cd /src
+
+get vaultaire-common 
+get marquise
+get vaultaire-query
+get vaultaire-control
+get chevalier-common
+get borel
+
+cd /
+
+find /src
+
+cabal install scotty
+
+cabal install -j \
+	/src/vaultaire-common \
+	/src/marquise \
+	/src/vaultaire-query \
+	/src/vaultaire-control \
+	/src/chevalier-common \
+	/src/borel 
