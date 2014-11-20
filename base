@@ -100,7 +100,8 @@ publish () {
 	if [[ cache/.stamp/publish -nt cache/.stamp/release ]] ; then
 		return
 	fi
-	BUILD=$(git --git-dir=$REPO/.git show-ref refs/heads/master | awk '{print $1}')
+	BUILD=$VERSION
+	#BUILD=$(git --git-dir=$REPO/.git show-ref refs/heads/master | awk '{print $1}')
 	# Tag the built image with the SHA from the software repo.
 	docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
 		"$DOCKER_REGISTRY/engineering/${NAME}:${BUILD}"
