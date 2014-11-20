@@ -124,15 +124,15 @@ haddock () {
 }
 
 get () { 
-	set +x
-	set +e
-        if [ -d $1/.git ] ; then
-                cd $1
-                git pull
-                cd ..
-        else
+		
+
+        #if [ -d $1/.git ] ; then
+        #        cd $1
+        #        git pull
+        #        cd ..
+ #       else
 		echo "git clone https://github.com/anchor/$1.git"
 		git clone https://github.com/anchor/$1.git
-        fi
+  #      fi
 }
 
