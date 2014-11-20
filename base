@@ -42,7 +42,7 @@ baseline () {
 		"$DOCKER_REGISTRY/afcowie/haskell" \
 		src/baseline
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
-	if [[ $RC -ne 0 ]]; then
+	if [ $RC -ne 0 ]; then
 		echo "Build returned nonzero exit status, bailing out."
 	fi
 	docker $DOCKER_OPTS commit "$IMAGE_NAME" "$DOCKER_REGISTRY/engineering/${NAME}:baseline"
@@ -65,7 +65,7 @@ dependencies () {
 	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/dependencies 
 
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
-	if [[ $RC -ne 0 ]]; then
+	if [ $RC -ne 0 ]; then
 		echo "Build returned nonzero exit status, bailing out."
 	fi
 	docker $DOCKER_OPTS commit "$IMAGE_NAME" "$DOCKER_REGISTRY/engineering/${NAME}:dependencies"
@@ -84,7 +84,7 @@ release () {
 	fi
 	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/afcowie/debian:jessie src/release
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
-	if [[ $RC -ne 0 ]]; then
+	if [ $RC -ne 0 ]; then
 		echo "Build returned nonzero exit status, bailing out."
 	fi
 	docker $DOCKER_OPTS commit "$IMAGE_NAME" "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}"
