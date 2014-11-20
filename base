@@ -62,6 +62,8 @@ dependencies () {
 	if [[ cache/.stamp/dependencies -nt cache/.stamp/baseline ]] ; then
 		return
 	fi
+	echo "RUN THE DEPENDENCIES"
+	echo docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/dependencies 
 	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/dependencies 
 
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
