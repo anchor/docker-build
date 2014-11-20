@@ -1,10 +1,16 @@
 #!/bin/sh
+set +x
+set +e
 
 #
 # Install a base system
 #
 
 initialize () {
+
+	set +x
+	set +e
+
 	if [ -f cache/.stamp/initialize ] ; then
 		return
 	fi
@@ -21,6 +27,8 @@ initialize () {
 
 
 baseline () {
+	set +x
+	set +e
 	if [ cache/.stamp/baseline -nt cache/.stamp/initalize ] ; then
 		return
 	fi
@@ -49,6 +57,8 @@ baseline () {
 #
 
 dependencies () {
+	set +x
+	set +e
 	if [ cache/.stamp/dependencies -nt cache/.stamp/baseline ] ; then
 		return
 	fi
