@@ -2,14 +2,14 @@
 set +x
 set +e
 
+mkdir -p cache/.stamp
+mkdir -p src/.cabal
+
 #
 # Install a base system
 #
 
 initialize () {
-
-	set +x
-	set +e
 
 	if [ -f cache/.stamp/initialize ] ; then
 		return
@@ -27,8 +27,6 @@ initialize () {
 
 
 baseline () {
-	set +x
-	set +e
 	if [ cache/.stamp/baseline -nt cache/.stamp/initalize ] ; then
 		return
 	fi
@@ -57,8 +55,6 @@ baseline () {
 #
 
 dependencies () {
-	set +x
-	set +e
 	if [ cache/.stamp/dependencies -nt cache/.stamp/baseline ] ; then
 		return
 	fi
@@ -81,8 +77,6 @@ dependencies () {
 #
 
 release () {
-	set +x
-	set +e
 	if [ cache/.stamp/release -nt cache/.stamp/dependencies ] ; then
 		return
 	fi
@@ -97,8 +91,6 @@ release () {
 }
 
 publish () {
-	set +x
-	set +e
 	if [ cache/.stamp/publish -nt cache/.stamp/release ] ; then
 		return
 	fi
@@ -118,21 +110,6 @@ publish () {
 }
 
 haddock () {
-	set +x
-	set +e
 	tar -czf ${NAME}-documentation.tar.gz cache/.cabal/share/doc
-}
-
-get () { 
-		
-
-        #if [ -d $1/.git ] ; then
-        #        cd $1
-        #        git pull
-        #        cd ..
- #       else
-		echo "git clone https://github.com/anchor/$1.git"
-		git clone https://github.com/anchor/$1.git
-  #      fi
 }
 

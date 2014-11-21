@@ -2,12 +2,8 @@
 
 # Post artifact creation steps
 
-
 set -x
 set -e
-
-exec > /src/release.log
-exec 2>&1
 
 apt-get update
 apt-get install libzmq3 libpq5
