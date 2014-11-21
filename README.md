@@ -22,4 +22,3 @@ Your repo should have the following structure
 `build` - copy the example file from `docker-base/samples/build`
 
 
-

@@ -3,8 +3,7 @@ set +x
 set +e
 
 
-# Called on first require
-
+# Called on first require, to setup command line vars, and folder structure
 build_init () { 
 	mkdir -p cache/.stamp
 	mkdir -p src/.cabal
@@ -14,24 +13,17 @@ build_init () {
 	DOCKER_REGISTRY=$2
 	DOCKER_OPTS=$3
 	VERSION=$4
-	
-	echo Name = $NAME
-	echo Options = $DOCKER_OPTS
-	echo Docker Registry = $DOCKER_REGISTRY
-	echo Version = $VERSION
-
 
 	if [ -z "$VERSION" ]; then
 	  VERSION=$(git show-ref refs/heads/master | awk '{print $1}')
 	fi
 
 	if [ -z "$DOCKER_REGISTRY" -o -z "$VERSION" ]; then
-	  echo "Usage: $0 -n=NAME -d=DOCKER_REGISTRY [-v=VERSION] [-o=DOCKER_OPTS]"
+	  echo "Usage: $0 NAME DOCKER_REGISTRY [DOCKER_OPTS] [VERSION]"
 	  echo
 	  echo "VERSION defaults to \$GIT_COMMIT"
 	  exit 1
 	fi
-
 } 
 
 

@@ -1,0 +1,11 @@
+#!/bin/sh
+# Post artifact creation steps
+
+set -x
+set -e
+
+apt-get update
+apt-get install libzmq3
+
+cp -v /src/.cabal/bin/* /usr/local/bin
+

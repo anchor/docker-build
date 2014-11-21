@@ -1,0 +1,14 @@
+#!/bin/sh
+# Baseline Distribution Packages go here
+
+
+set -x
+set -e
+                                                                                                                      
+apt-get update                                     
+
+# required packages for git to work    | zeromq requirements                                                     
+apt-get install git ca-certificates ssh  pkg-config libzmq3-dev 
+
+# append anything else here
+
