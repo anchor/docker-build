@@ -10,31 +10,10 @@ build_init () {
 	mkdir -p src/.cabal
 
 
-
-	# Simple command line interpretation
-	for i in "$@"
-	do
-	case $i in
-	    -n=*|--name=*)
-	    NAME="${i#*=}"
-
-	    ;;
-	    -d=*|--docker_registry=*)
-	    DOCKER_REGISTRY="${i#*=}"
-	    ;;
-
-	    -o=*|--docker-opts=*)
-	    DOCKER_OPTS="${i#*=}"
-	    ;;
-
-	    -v=*|--version=*)
-	    VERSION="${i#*=}"
-	    ;;
-	    *)
-	    ;;
-	esac
-	done
-
+	NAME=$1
+	DOCKER_REGISTRY=$2
+	DOCKER_OPTS=$3
+	VERSION=$4
 	
 	echo Name = $NAME
 	echo Options = $DOCKER_OPTS

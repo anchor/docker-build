@@ -1,20 +1,25 @@
 docker-base
 ============
 
-Base build scripts and folder structure for docker images
+Base build scripts for docker images
 
 
-### Build process
+# Create a new docker build from this repo
 
-```
-mkdir docker-myproject
-cd docker-myproject
-git init 
-git submodule add https://github.com/anchor/docker-base
-cp docker-base/build . 
-cp docker-base/sample_* src/
-```
 
-Then review the documentation in `build`
+Let's call your repo `docker-myproject`
+
+
+Your repo should have the following structure
+     | build
+     | src
+       - baseline
+       - dependencies
+       - release
+
+`src/` - copy the examples from the `docker-base/samples` directory to your `docker-myproject/src` folder
+
+`build` - copy the example file from `docker-base/samples/build`
+
 
 
