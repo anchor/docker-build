@@ -36,6 +36,12 @@ build_init () {
 	done
 
 	
+	echo Name = $NAME
+	echo Options = $DOCKER_OPTS
+	echo Docker Registry = $DOCKER_REGISTRY
+	echo Version = $VERSION
+
+
 	if [ -z "$VERSION" ]; then
 	  VERSION=$(git show-ref refs/heads/master | awk '{print $1}')
 	fi
