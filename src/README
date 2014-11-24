@@ -1,3 +1,1 @@
-Build infrastructure in .build
-Cabal configuration in .cabal
-Build stamps (zero length) in .stamp
+Cabal configuration in cabal
