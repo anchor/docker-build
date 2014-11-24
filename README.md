@@ -14,7 +14,7 @@ Your repo should have the following structure
      | build
      | src
        - baseline
-       - dependencies
+       - objects
        - release
 
 `src/` - copy the examples from the `docker-base/samples` directory to your `docker-myproject/src` folder

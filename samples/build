@@ -11,7 +11,7 @@ build_init "$@"
 
 initialize
 baseline
-dependencies
+objects
 release
 publish
 #haddock

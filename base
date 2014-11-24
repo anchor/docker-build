@@ -2,12 +2,13 @@
 set +x
 set +e
 
-
+# 
 # Called on first require, to setup command line vars, and folder structure
-build_init () { 
-	mkdir -p cache/.stamp
-	mkdir -p src/.cabal
+#
 
+build_init () { 
+	mkdir -p cache/stamp
+	mkdir -p src/.cabal
 
 	NAME=$1
 	DOCKER_REGISTRY=$2
@@ -33,7 +34,7 @@ build_init () {
 
 initialize () {
 
-	if [ -f cache/.stamp/initialize ] ; then
+	if [ -f cache/stamp/initialize ] ; then
 		return
 	fi
 
@@ -44,12 +45,12 @@ initialize () {
 
 	docker $DOCKER_OPTS pull $DOCKER_REGISTRY/afcowie/debian:jessie
 	docker $DOCKER_OPTS pull $DOCKER_REGISTRY/afcowie/haskell:latest
-	touch cache/.stamp/initialize
+	touch cache/stamp/initialize
 }
 
 
 baseline () {
-	if [ cache/.stamp/baseline -nt cache/.stamp/initalize ] ; then
+	if [ cache/stamp/baseline -nt cache/stamp/initalize ] ; then
 		return
 	fi
 
@@ -68,38 +69,39 @@ baseline () {
 	docker $DOCKER_OPTS commit "$IMAGE_NAME" "$DOCKER_REGISTRY/engineering/${NAME}:baseline"
 	docker $DOCKER_OPTS rm "$IMAGE_NAME"
 
-	touch cache/.stamp/baseline
+	touch cache/stamp/baseline
 }
 
 
 #
-# Update (or initally clone) source code and build dependencies in volume
+# Update (or initally clone) source code and build objects in volume
 #
 
-dependencies () {
-	if [ cache/.stamp/dependencies -nt cache/.stamp/baseline ] ; then
+objects () {
+	if [ cache/stamp/objects -nt cache/stamp/baseline ] ; then
 		return
 	fi
 	echo "RUN THE DEPENDENCIES"
-	echo docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/dependencies 
-	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/dependencies 
+	echo docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/objects 
+	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/objects 
 
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
 		echo "Build returned nonzero exit status, bailing out."
 	fi
-	docker $DOCKER_OPTS commit "$IMAGE_NAME" "$DOCKER_REGISTRY/engineering/${NAME}:dependencies"
+	docker $DOCKER_OPTS commit "$IMAGE_NAME" "$DOCKER_REGISTRY/engineering/${NAME}:objects"
 	docker $DOCKER_OPTS rm "$IMAGE_NAME"
 
-	touch cache/.stamp/dependencies
+	touch cache/stamp/objects
 }
+
 
 #
 # Extract the binary artifacts
 #
 
 release () {
-	if [ cache/.stamp/release -nt cache/.stamp/dependencies ] ; then
+	if [ cache/stamp/release -nt cache/stamp/objects ] ; then
 		return
 	fi
 	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/afcowie/debian:jessie src/release
@@ -109,15 +111,18 @@ release () {
 	fi
 	docker $DOCKER_OPTS commit "$IMAGE_NAME" "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}"
 	docker $DOCKER_OPTS rm "$IMAGE_NAME"
-	touch cache/.stamp/release
+	touch cache/stamp/release
 }
 
+#
+#  
+#
+
 publish () {
-	if [ cache/.stamp/publish -nt cache/.stamp/release ] ; then
+	if [ cache/stamp/publish -nt cache/stamp/release ] ; then
 		return
 	fi
 	BUILD=$VERSION
-	#BUILD=$(git --git-dir=$REPO/.git show-ref refs/heads/master | awk '{print $1}')
 	# Tag the built image with the SHA from the software repo.
 	docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
 		"$DOCKER_REGISTRY/engineering/${NAME}:${BUILD}"
@@ -128,7 +133,7 @@ publish () {
 	docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:${BUILD}"
 	docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:latest"
 
-	touch cache/.stamp/publish 
+	touch cache/stamp/publish 
 }
 
 haddock () {
