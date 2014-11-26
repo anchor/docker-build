@@ -140,3 +140,8 @@ haddock () {
 	tar -czf ${NAME}-documentation.tar.gz cache/.cabal/share/doc
 }
 
+# Utility functions
+
+github_get () {
+	git clone https://github.com/${1}/${2}
+}
