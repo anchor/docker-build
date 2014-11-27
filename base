@@ -20,6 +20,7 @@ show_help() {
 	-r|--docker_release_image  -- Image for releasing
 	# or just one
 	-i|--docker_image          -- Image for both building and releasing
+	#format: image:tag
 	"
 	exit 0
 }
@@ -42,8 +43,8 @@ build_init () {
 			-v|--version) VERSION=$1; shift;;
 			-d|--docker_registry) DOCKER_REGISTRY=$; shift;;
 			-o|--docker_opts) DOCKER_OPTS=$1; shift;;
-			-b|--docker_build_image) DOCKER_BUILD_IMAGE=$1; shift;;
-			-r|--docker_release_image) DOCKER_RELEASE_IMAGE=$1; shift;;
+			-b|--docker_build_image) DOCKER_BUILD=$1; shift;;
+			-r|--docker_release_image) DOCKER_RELEASE=$1; shift;;
 			-i|--docker_image) DOCKER_IMAGE=$1; shift;;
 			-g|--git_branch) GIT_BRANCH=$1; shift;;
 			-?|-h ) show_help; shift;;
@@ -61,24 +62,24 @@ build_init () {
 	esac
 
 	# Must provide at least DOCKER_(RELEASE|BUILD)_IMAGE or DOCKER_IMAGE
-	if [ -z "$DOCKER_RELEASE_IMAGE" -a -z "$DOCKER_BUILD_IMAGE" -a -z "$DOCKER_IMAGE" ]; then
+	if [ -z "$DOCKER_RELEASE" -a -z "$DOCKER_BUILD" -a -z "$DOCKER_IMAGE" ]; then
 		show_help
 	fi
 
 	# If using just one image, fill the other two with items.
-	if [ -z "$DOCKER_RELEASE_IMAGE" -a -z "$DOCKER_BUILD_IMAGE" -a -n "$DOCKER_IMAGE" ]; then
-		DOCKER_RELEASE_IMAGE=$DOCKER_IMAGE
-		DOCKER_BUILD_IMAGE=$DOCKER_IMAGE
+	if [ -z "$DOCKER_RELEASE" -a -z "$DOCKER_BUILD" -a -n "$DOCKER_IMAGE" ]; then
+		DOCKER_RELEASE=$DOCKER_IMAGE
+		DOCKER_BUILD=$DOCKER_IMAGE
 	fi
 
 	# If using the main docker registry, don't include the slash in the name.
 	# e.g. centos vs myregistry.com/centos
 	if [ -n "$DOCKER_REGISTRY" ]; then
-		DOCKER_RELEASE=$DOCKER_RELEASE_IMAGE
-		DOCKER_BUILD=$DOCKER_BUILD_IMAGE
+		DOCKER_RELEASE_IMAGE=$DOCKER_RELEASE
+		DOCKER_BUILD_IMAGE=$DOCKER_BUILD
 	else
-		DOCKER_RELEASE="$DOCKER_REGISTRY/$DOCKER_RELEASE_IMAGE"
-		DOCKER_BUILD="$DOCKER_REGISTRY/$DOCKER_BUILD_IMAGE"
+		DOCKER_RELEASE_IMAGE="$DOCKER_REGISTRY/$DOCKER_RELEASE"
+		DOCKER_BUILD_IMAGE="$DOCKER_REGISTRY/$DOCKER_BUILD"
 	fi
 
 	# Use predefined $GIT_COMMIT, or find our own
@@ -119,8 +120,8 @@ initialize () {
 
 	rsync -a src/ cache
 
-	docker $DOCKER_OPTS pull $DOCKER_REGISTRY/afcowie/debian:jessie
-	docker $DOCKER_OPTS pull $DOCKER_REGISTRY/afcowie/haskell:latest
+	docker $DOCKER_OPTS pull $DOCKER_RELEASE_IMAGE
+	docker $DOCKER_OPTS pull $DOCKER_BUILD_IMAGE
 	touch cache/stamp/initialize
 }
 
@@ -136,7 +137,7 @@ baseline () {
 
 	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t \
 		-v ${PWD}/cache:/src:rw \
-		"$DOCKER_REGISTRY/afcowie/haskell" \
+		"$DOCKER_BUILD_IMAGE" \
 		src/baseline
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
@@ -179,7 +180,7 @@ release () {
 	if [ cache/stamp/release -nt cache/stamp/objects ] ; then
 		return
 	fi
-	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/afcowie/debian:jessie src/release
+	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_RELEASE_IMAGE src/release
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
 		echo "Build returned nonzero exit status, bailing out."
