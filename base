@@ -20,6 +20,10 @@ build_init () {
 	  GIT_BRANCH="master"
 	fi
 
+	if [ $GIT_BRANCH == */* ]; then
+	  GIT_BRANCH=`echo $GIT_BRANCH | cut -d'/' -f2`
+	fi
+
 	echo "Using git branch $GIT_BRANCH"
 
 	if [ -z "$VERSION" ]; then
