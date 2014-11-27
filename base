@@ -137,7 +137,7 @@ publish () {
 	docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
 		"$DOCKER_REGISTRY/engineering/${NAME}:${BUILD}"
 
-	if [ $GIT_BRANCH == "master" ]; then
+	if [ "$GIT_BRANCH" == "master" ]; then
 		# Tag the built image with "latest".
 		echo "Pushing a master branch build to docker as $NAME:latest"
 		docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
