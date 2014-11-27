@@ -146,7 +146,7 @@ publish () {
 		# Tag the built image with the branch.
 		echo "Pushing the topic branch $GIT_BRANCH to docker as '$NAME:$GIT_BRANCH'"
 		docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
-			"$DOCKER_REGISTRY/engineering/${NAME}:${BRANCH}"
+			"$DOCKER_REGISTRY/engineering/${NAME}:${GIT_BRANCH}"
 	fi
 	# Push these tags to the repo.
 	docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:${BUILD}"
