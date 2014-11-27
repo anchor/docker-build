@@ -2,11 +2,11 @@
 set +x
 set +e
 
-# 
+#
 # Called on first require, to setup command line vars, and folder structure
 #
 
-build_init () { 
+build_init () {
 	mkdir -p cache/stamp
 	mkdir -p src/.cabal
 
@@ -15,17 +15,28 @@ build_init () {
 	DOCKER_OPTS=$3
 	VERSION=$4
 
+	if [ -z "$GIT_BRANCH" ]; then
+		GIT_BRANCH="master"
+	fi
+
+	# If using the Jenkins-style $GIT_BRANCH format ("repo/branch"), retrieve just the branch.
+	case "$GIT_BRANCH" in
+		*/* ) GIT_BRANCH=`echo $GIT_BRANCH | cut -d'/' -f2`;;
+	esac
+
+	echo "Using git branch $GIT_BRANCH"
+
 	if [ -z "$VERSION" ]; then
-	  VERSION=$(git show-ref refs/heads/master | awk '{print $1}')
+		VERSION=$(git show-ref refs/heads/master | awk '{print $1}')
 	fi
 
 	if [ -z "$DOCKER_REGISTRY" -o -z "$VERSION" ]; then
-	  echo "Usage: $0 NAME DOCKER_REGISTRY [DOCKER_OPTS] [VERSION]"
-	  echo
-	  echo "VERSION defaults to \$GIT_COMMIT"
-	  exit 1
+		echo "Usage: $0 NAME DOCKER_REGISTRY [DOCKER_OPTS] [VERSION]"
+		echo
+		echo "VERSION defaults to \$GIT_COMMIT"
+		exit 1
 	fi
-} 
+}
 
 
 #
@@ -38,7 +49,7 @@ initialize () {
 		return
 	fi
 
-	IMAGE_NAME="${NAME}-${VERSION}"
+	IMAGE_NAME="${NAME}-${GIT_BRANCH}-${VERSION}"
 	REPO="cache/${NAME}"
 
 	rsync -a src/ cache
@@ -81,9 +92,8 @@ objects () {
 	if [ cache/stamp/objects -nt cache/stamp/baseline ] ; then
 		return
 	fi
-	echo "RUN THE DEPENDENCIES"
-	echo docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/objects 
-	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/objects 
+	echo docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/objects
+	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/objects
 
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
@@ -115,7 +125,7 @@ release () {
 }
 
 #
-#  
+#
 #
 
 publish () {
@@ -126,14 +136,24 @@ publish () {
 	# Tag the built image with the SHA from the software repo.
 	docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
 		"$DOCKER_REGISTRY/engineering/${NAME}:${BUILD}"
-	# Tag the built image with "latest".
-	docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
-		"$DOCKER_REGISTRY/engineering/${NAME}:latest"
-	# Push these tags to the repo.
-	docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:${BUILD}"
-	docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:latest"
 
-	touch cache/stamp/publish 
+	if [ "$GIT_BRANCH" = "master" ]; then
+		# Tag the built image with "latest".
+		echo "Pushing a master branch build to docker as '$NAME:latest'"
+		docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
+			"$DOCKER_REGISTRY/engineering/${NAME}:latest"
+		docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:latest"
+	else
+		# Tag the built image with the branch.
+		echo "Pushing the topic branch $GIT_BRANCH to docker as '$NAME:$GIT_BRANCH'"
+		docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
+			"$DOCKER_REGISTRY/engineering/${NAME}:${GIT_BRANCH}"
+		docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:${GIT_BRANCH}"
+	fi
+
+	docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:${BUILD}"
+
+	touch cache/stamp/publish
 }
 
 haddock () {
