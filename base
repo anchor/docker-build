@@ -22,7 +22,7 @@ show_help() {
 	-i|--docker_image          -- Image for both building and releasing
 	#format: image:tag
 	"
-	exit 0
+	exit 1
 }
 
 
@@ -225,5 +225,3 @@ publish () {
 haddock () {
 	tar -czf ${NAME}-documentation.tar.gz cache/.cabal/share/doc
 }
-
-build_init
