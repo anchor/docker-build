@@ -20,6 +20,8 @@ build_init () {
 	  GIT_BRANCH="master"
 	fi
 
+	echo "Using git branch $GIT_BRANCH"
+
 	if [ -z "$VERSION" ]; then
 	  VERSION=$(git show-ref refs/heads/master | awk '{print $1}')
 	fi
@@ -86,9 +88,8 @@ objects () {
 	if [ cache/stamp/objects -nt cache/stamp/baseline ] ; then
 		return
 	fi
-	echo "RUN THE DEPENDENCIES"
-	echo docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/objects 
-	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/objects 
+	echo docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/objects
+	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/objects
 
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
