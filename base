@@ -137,14 +137,14 @@ publish () {
 	docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
 		"$DOCKER_REGISTRY/engineering/${NAME}:${BUILD}"
 
-	if [ "$GIT_BRANCH" == "master" ]; then
+	if [ "$GIT_BRANCH" = "master" ]; then
 		# Tag the built image with "latest".
-		echo "Pushing a master branch build to docker as $NAME:latest"
+		echo "Pushing a master branch build to docker as '$NAME:latest'"
 		docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
 			"$DOCKER_REGISTRY/engineering/${NAME}:latest"
 	else
 		# Tag the built image with the branch.
-		echo "Pushing the optic branch $BRANCH to docker as $NAME:$BRANCH"
+		echo "Pushing the topic branch $GIT_BRANCH to docker as '$NAME:$GIT_BRANCH'"
 		docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
 			"$DOCKER_REGISTRY/engineering/${NAME}:${BRANCH}"
 	fi
