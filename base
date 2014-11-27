@@ -3,6 +3,29 @@ set +x
 set +e
 
 #
+# Parameter documentation, called on init error
+#
+
+show_help() {
+	echo "Usage: $0 [options]
+
+	-n|--name                  -- Name of created docker image
+	-d|--docker_registry       -- Docker Registry              Defaults to https://registry.hub.docker.com
+	-o|--docker_opts           -- Docker options               Optional
+	-g|--git_branch            -- Git branch for artifacts     Defaults to master
+	-v|--version               -- Version                      Defaults to \$GIT_COMMIT
+
+	# Docker image options - provide either
+	-b|--docker_build_image    -- Image for buidling
+	-r|--docker_release_image  -- Image for releasing
+	# or just one
+	-i|--docker_image          -- Image for both building and releasing
+	"
+	exit 0
+}
+
+
+#
 # Called on first require, to setup command line vars, and folder structure
 #
 
@@ -10,11 +33,24 @@ build_init () {
 	mkdir -p cache/stamp
 	mkdir -p src/.cabal
 
-	NAME=$1
-	DOCKER_REGISTRY=$2
-	DOCKER_OPTS=$3
-	VERSION=$4
+	while [ "$#" != "0" ]
+	do
+		key="$1"
+		shift
+		case $key in
+			-n|--name) NAME=$1; shift;;
+			-v|--version) VERSION=$1; shift;;
+			-d|--docker_registry) DOCKER_REGISTRY=$; shift;;
+			-o|--docker_opts) DOCKER_OPTS=$1; shift;;
+			-b|--docker_build_image) DOCKER_BUILD_IMAGE=$1; shift;;
+			-r|--docker_release_image) DOCKER_RELEASE_IMAGE=$1; shift;;
+			-i|--docker_image) DOCKER_IMAGE=$1; shift;;
+			-g|--git_branch) GIT_BRANCH=$1; shift;;
+			-?|-h ) show_help; shift;;
+		esac
+	done
 
+	# Default branch is 'master'
 	if [ -z "$GIT_BRANCH" ]; then
 		GIT_BRANCH="master"
 	fi
@@ -24,18 +60,47 @@ build_init () {
 		*/* ) GIT_BRANCH=`echo $GIT_BRANCH | cut -d'/' -f2`;;
 	esac
 
-	echo "Using git branch $GIT_BRANCH"
+	# Must provide at least DOCKER_(RELEASE|BUILD)_IMAGE or DOCKER_IMAGE
+	if [ -z "$DOCKER_RELEASE_IMAGE" -a -z "$DOCKER_BUILD_IMAGE" -a -z "$DOCKER_IMAGE" ]; then
+		show_help
+	fi
 
+	# If using just one image, fill the other two with items.
+	if [ -z "$DOCKER_RELEASE_IMAGE" -a -z "$DOCKER_BUILD_IMAGE" -a -n "$DOCKER_IMAGE" ]; then
+		DOCKER_RELEASE_IMAGE=$DOCKER_IMAGE
+		DOCKER_BUILD_IMAGE=$DOCKER_IMAGE
+	fi
+
+	# If using the main docker registry, don't include the slash in the name.
+	# e.g. centos vs myregistry.com/centos
+	if [ -n "$DOCKER_REGISTRY" ]; then
+		DOCKER_RELEASE=$DOCKER_RELEASE_IMAGE
+		DOCKER_BUILD=$DOCKER_BUILD_IMAGE
+	else
+		DOCKER_RELEASE="$DOCKER_REGISTRY/$DOCKER_RELEASE_IMAGE"
+		DOCKER_BUILD="$DOCKER_REGISTRY/$DOCKER_BUILD_IMAGE"
+	fi
+
+	# Use predefined $GIT_COMMIT, or find our own
 	if [ -z "$VERSION" ]; then
-		VERSION=$(git show-ref refs/heads/master | awk '{print $1}')
+		if [ -z "$GIT_COMMIT" ]; then
+			VERSION=$(git show-ref refs/heads/master | awk '{print $1}')
+		else
+			VERSION=$GIT_COMMIT
+		fi
 	fi
 
-	if [ -z "$DOCKER_REGISTRY" -o -z "$VERSION" ]; then
-		echo "Usage: $0 NAME DOCKER_REGISTRY [DOCKER_OPTS] [VERSION]"
-		echo
-		echo "VERSION defaults to \$GIT_COMMIT"
-		exit 1
+	# Error out if any mandatory parameters were missed
+	if [ -z "$NAME" -o -z "$VERSION" ]; then
+		show_help
 	fi
+
+	echo "This build will be using:
+		GIT_BRANCH:           $GIT_BRANCH
+		DOCKER_BUILD_IMAGE:   $DOCKER_BUILD_IMAGE
+		DOCKER_RELEASE_IMAGE: $DOCKER_RELEASE_IMAGE
+		VERISON:              $VERSION
+	"
 }
 
 
@@ -160,3 +225,4 @@ haddock () {
 	tar -czf ${NAME}-documentation.tar.gz cache/.cabal/share/doc
 }
 
+build_init
