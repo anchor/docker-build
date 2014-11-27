@@ -2,11 +2,11 @@
 set +x
 set +e
 
-# 
+#
 # Called on first require, to setup command line vars, and folder structure
 #
 
-build_init () { 
+build_init () {
 	mkdir -p cache/stamp
 	mkdir -p src/.cabal
 
@@ -16,27 +16,27 @@ build_init () {
 	VERSION=$4
 
 	if [ -z "$GIT_BRANCH" ]; then
-	  GIT_BRANCH="master"
+		GIT_BRANCH="master"
 	fi
 
 	# If using the Jenkins-style $GIT_BRANCH format ("repo/branch"), retrieve just the branch.
 	case "$GIT_BRANCH" in
-		  */* ) GIT_BRANCH=`echo $GIT_BRANCH | cut -d'/' -f2`;;
+		*/* ) GIT_BRANCH=`echo $GIT_BRANCH | cut -d'/' -f2`;;
 	esac
 
 	echo "Using git branch $GIT_BRANCH"
 
 	if [ -z "$VERSION" ]; then
-	  VERSION=$(git show-ref refs/heads/master | awk '{print $1}')
+		VERSION=$(git show-ref refs/heads/master | awk '{print $1}')
 	fi
 
 	if [ -z "$DOCKER_REGISTRY" -o -z "$VERSION" ]; then
-	  echo "Usage: $0 NAME DOCKER_REGISTRY [DOCKER_OPTS] [VERSION]"
-	  echo
-	  echo "VERSION defaults to \$GIT_COMMIT"
-	  exit 1
+		echo "Usage: $0 NAME DOCKER_REGISTRY [DOCKER_OPTS] [VERSION]"
+		echo
+		echo "VERSION defaults to \$GIT_COMMIT"
+		exit 1
 	fi
-} 
+}
 
 
 #
@@ -125,7 +125,7 @@ release () {
 }
 
 #
-#  
+#
 #
 
 publish () {
@@ -153,7 +153,7 @@ publish () {
 
 	docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:${BUILD}"
 
-	touch cache/stamp/publish 
+	touch cache/stamp/publish
 }
 
 haddock () {
