@@ -15,14 +15,14 @@ build_init () {
 	DOCKER_OPTS=$3
 	VERSION=$4
 
-	# Jenkins Git plugin environment variable, possibly.
 	if [ -z "$GIT_BRANCH" ]; then
 	  GIT_BRANCH="master"
 	fi
 
-	if [ $GIT_BRANCH == */* ]; then
-	  GIT_BRANCH=`echo $GIT_BRANCH | cut -d'/' -f2`
-	fi
+	# If using the Jenkins-style $GIT_BRANCH format ("repo/branch"), retrieve just the branch.
+	case "$GIT_BRANCH" in
+		  */* ) GIT_BRANCH=`echo $GIT_BRANCH | cut -d'/' -f2`;;
+	esac
 
 	echo "Using git branch $GIT_BRANCH"
 
