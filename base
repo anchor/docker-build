@@ -15,6 +15,11 @@ build_init () {
 	DOCKER_OPTS=$3
 	VERSION=$4
 
+	# Jenkins Git plugin environment variable, possibly.
+	if [ -z "$GIT_BRANCH" ]; then
+	  GIT_BRANCH="master"
+	fi
+
 	if [ -z "$VERSION" ]; then
 	  VERSION=$(git show-ref refs/heads/master | awk '{print $1}')
 	fi
@@ -38,7 +43,7 @@ initialize () {
 		return
 	fi
 
-	IMAGE_NAME="${NAME}-${VERSION}"
+	IMAGE_NAME="${NAME}-${GIT_BRANCH}-${VERSION}"
 	REPO="cache/${NAME}"
 
 	rsync -a src/ cache
@@ -126,9 +131,16 @@ publish () {
 	# Tag the built image with the SHA from the software repo.
 	docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
 		"$DOCKER_REGISTRY/engineering/${NAME}:${BUILD}"
-	# Tag the built image with "latest".
-	docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
-		"$DOCKER_REGISTRY/engineering/${NAME}:latest"
+
+	if [ $GIT_BRANCH == "master"]; then
+		# Tag the built image with "latest".
+		docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
+			"$DOCKER_REGISTRY/engineering/${NAME}:latest"
+	else
+		# Tag the built image with the branch.
+		docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
+			"$DOCKER_REGISTRY/engineering/${NAME}:${BRANCH}"
+	fi
 	# Push these tags to the repo.
 	docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:${BUILD}"
 	docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:latest"
