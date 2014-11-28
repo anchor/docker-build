@@ -41,7 +41,7 @@ build_init () {
 		case $key in
 			-n|--name) NAME=$1; shift;;
 			-v|--version) VERSION=$1; shift;;
-			-d|--docker_registry) DOCKER_REGISTRY=$; shift;;
+			-d|--docker_registry) DOCKER_REGISTRY=$1; shift;;
 			-o|--docker_opts) DOCKER_OPTS=$1; shift;;
 			-b|--docker_build_image) DOCKER_BUILD=$1; shift;;
 			-r|--docker_release_image) DOCKER_RELEASE=$1; shift;;
@@ -74,7 +74,7 @@ build_init () {
 
 	# If using the main docker registry, don't include the slash in the name.
 	# e.g. centos vs myregistry.com/centos
-	if [ -n "$DOCKER_REGISTRY" ]; then
+	if [ -z "$DOCKER_REGISTRY" ]; then
 		DOCKER_RELEASE_IMAGE=$DOCKER_RELEASE
 		DOCKER_BUILD_IMAGE=$DOCKER_BUILD
 	else
@@ -98,6 +98,7 @@ build_init () {
 
 	echo "This build will be using:
 		GIT_BRANCH:           $GIT_BRANCH
+		DOCKER_REGISTRY:      $DOCKER_REGISTRY
 		DOCKER_BUILD_IMAGE:   $DOCKER_BUILD_IMAGE
 		DOCKER_RELEASE_IMAGE: $DOCKER_RELEASE_IMAGE
 		VERISON:              $VERSION
