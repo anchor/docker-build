@@ -55,7 +55,7 @@ initialize () {
 	rsync -a src/ cache
 
 	docker $DOCKER_OPTS pull $DOCKER_REGISTRY/afcowie/debian:jessie
-	docker $DOCKER_OPTS pull $DOCKER_REGISTRY/afcowie/haskell:latest
+	docker $DOCKER_OPTS pull $DOCKER_REGISTRY/engineering/haskell:latest
 	touch cache/stamp/initialize
 }
 
@@ -71,7 +71,7 @@ baseline () {
 
 	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t \
 		-v ${PWD}/cache:/src:rw \
-		"$DOCKER_REGISTRY/afcowie/haskell" \
+		"$DOCKER_REGISTRY/engineering/haskell" \
 		src/baseline
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
