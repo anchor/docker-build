@@ -36,6 +36,9 @@ build_init () {
 		echo "VERSION defaults to \$GIT_COMMIT"
 		exit 1
 	fi
+
+	# Set the name we'll use from here on.
+	IMAGE_NAME="${NAME}-${GIT_BRANCH}-${VERSION}"
 }
 
 
@@ -48,9 +51,6 @@ initialize () {
 	if [ -f cache/stamp/initialize ] ; then
 		return
 	fi
-
-	IMAGE_NAME="${NAME}-${GIT_BRANCH}-${VERSION}"
-	REPO="cache/${NAME}"
 
 	rsync -a src/ cache
 
