@@ -69,10 +69,10 @@ baseline () {
 	docker $DOCKER_OPTS stop "$IMAGE_NAME" || true
 	docker $DOCKER_OPTS rm "$IMAGE_NAME" || true
 
-	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t \
+	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -ti \
 		-v ${PWD}/cache:/src:rw \
 		"$DOCKER_REGISTRY/afcowie/haskell" \
-		src/baseline
+		/src/baseline
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
 		echo "Build returned nonzero exit status, bailing out."
@@ -92,8 +92,7 @@ objects () {
 	if [ cache/stamp/objects -nt cache/stamp/baseline ] ; then
 		return
 	fi
-	echo docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/objects
-	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline src/objects
+	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -ti -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline /src/objects
 
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
@@ -114,7 +113,7 @@ release () {
 	if [ cache/stamp/release -nt cache/stamp/objects ] ; then
 		return
 	fi
-	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/afcowie/debian:jessie src/release
+	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -ti -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/afcowie/debian:jessie /src/release
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
 		echo "Build returned nonzero exit status, bailing out."
