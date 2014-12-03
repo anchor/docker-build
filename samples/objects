@@ -3,7 +3,6 @@
 set -x
 set -e
 
-export HOME=/src
 export PATH=/src/.cabal/bin:$PATH
 cabal update
 
