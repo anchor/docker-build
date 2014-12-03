@@ -53,7 +53,7 @@ initialize () {
 	REPO="cache/${NAME}"
 
 	rsync -a src/ cache
-        cp /root/.cabal/config cache/.cabal/config
+        cp /root/.cabal/config src/.cabal/config
 
 	docker $DOCKER_OPTS pull $DOCKER_REGISTRY/afcowie/debian:jessie
 	docker $DOCKER_OPTS pull $DOCKER_REGISTRY/engineering/haskell:latest
