@@ -14,6 +14,7 @@ build_init () {
 	DOCKER_REGISTRY=$2
 	DOCKER_OPTS=$3
 	VERSION=$4
+	UID=$(stat -c %u:%g .)
 
 	if [ -z "$GIT_BRANCH" ]; then
 		GIT_BRANCH="master"
@@ -72,7 +73,7 @@ baseline () {
 	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t \
 		-v ${PWD}/cache:/src:rw \
 		"$DOCKER_REGISTRY/engineering/haskell" \
-		/src/baseline
+		"/src/baseline ; chown -R $UID cache/"
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
 		echo "Build returned nonzero exit status, bailing out."
@@ -92,7 +93,10 @@ objects () {
 	if [ cache/stamp/objects -nt cache/stamp/baseline ] ; then
 		return
 	fi
-	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -ti -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/engineering/${NAME}:baseline /src/objects
+	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -ti \
+	        -v ${PWD}/cache:/src:rw \
+	        $DOCKER_REGISTRY/engineering/${NAME}:baseline \
+	        '/src/objects ; chown -R $UID cache/'
 
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
@@ -113,7 +117,10 @@ release () {
 	if [ cache/stamp/release -nt cache/stamp/objects ] ; then
 		return
 	fi
-	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -ti -v ${PWD}/cache:/src:rw $DOCKER_REGISTRY/afcowie/debian:jessie /src/release
+	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -ti \
+	       -v ${PWD}/cache:/src:rw \
+	       $DOCKER_REGISTRY/afcowie/debian:jessie \
+	       '/src/release ; chown -R $UID cache/'
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
 		echo "Build returned nonzero exit status, bailing out."
