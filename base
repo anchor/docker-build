@@ -140,19 +140,19 @@ publish () {
 	fi
 	BUILD=$VERSION
 	# Tag the built image with the SHA from the software repo.
-	docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
+	docker $DOCKER_OPTS tag -f "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
 		"$DOCKER_REGISTRY/engineering/${NAME}:${BUILD}"
 
 	if [ "$GIT_BRANCH" = "master" ]; then
 		# Tag the built image with "latest".
 		echo "Pushing a master branch build to docker as '$NAME:latest'"
-		docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
+		docker $DOCKER_OPTS tag -f "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
 			"$DOCKER_REGISTRY/engineering/${NAME}:latest"
 		docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:latest"
 	else
 		# Tag the built image with the branch.
 		echo "Pushing the topic branch $GIT_BRANCH to docker as '$NAME:$GIT_BRANCH'"
-		docker $DOCKER_OPTS tag "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
+		docker $DOCKER_OPTS tag -f "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
 			"$DOCKER_REGISTRY/engineering/${NAME}:${GIT_BRANCH}"
 		docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:${GIT_BRANCH}"
 	fi
