@@ -14,7 +14,7 @@ build_init () {
 	DOCKER_REGISTRY=$2
 	DOCKER_OPTS=$3
 	VERSION=$4
-	USER="$UID:$GID"
+	USER="$UID"
 
 	if [ -z "$GIT_BRANCH" ]; then
 		GIT_BRANCH="master"
