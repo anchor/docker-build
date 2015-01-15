@@ -73,7 +73,7 @@ baseline () {
 	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t \
 		-v ${PWD}/cache:/src:rw \
 		"$DOCKER_REGISTRY/engineering/haskell" \
-		"/bin/bash" -- -c "/src/baseline ; chown -R $USER /src"
+		"/bin/bash" -c "/src/baseline ; chown -R $USER /src"
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
 		echo "Build returned nonzero exit status, bailing out."
@@ -96,7 +96,7 @@ objects () {
 	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -ti \
 	        -v ${PWD}/cache:/src:rw \
 	        $DOCKER_REGISTRY/engineering/${NAME}:baseline \
-	        "/bin/bash" -- -c "/src/objects ; chown -R $USER /src"
+	        "/bin/bash" -c "/src/objects ; chown -R $USER /src"
 
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
@@ -120,7 +120,7 @@ release () {
 	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -ti \
 	       -v ${PWD}/cache:/src:rw \
 	       $DOCKER_REGISTRY/afcowie/debian:jessie \
-	       "/bin/bash" -- -c "/src/release ; chown -R $USER /src"
+	       "/bin/bash" -c "/src/release ; chown -R $USER /src"
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
 		echo "Build returned nonzero exit status, bailing out."
