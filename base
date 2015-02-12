@@ -55,6 +55,7 @@ initialize () {
 
 	rsync -a src/ cache
 
+	docker $DOCKER_OPTS pull $DOCKER_REGISTRY/afcowie/debian:jessie
 	docker $DOCKER_OPTS pull $DOCKER_REGISTRY/engineering/haskell:latest
 	touch cache/stamp/initialize
 }
