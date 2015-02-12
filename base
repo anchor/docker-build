@@ -131,7 +131,6 @@ release () {
 	       -v ${PWD}/cache:/src:rw \
 	       $DOCKER_REGISTRY/afcowie/debian:jessie \
 	       "/bin/bash" -c "/src/release && chown -R $USER /src"
-	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	bailout_on_failure "$IMAGE_NAME"
 	docker $DOCKER_OPTS commit "$IMAGE_NAME" "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}"
 	docker $DOCKER_OPTS rm "$IMAGE_NAME"
