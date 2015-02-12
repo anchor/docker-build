@@ -55,7 +55,6 @@ initialize () {
 
 	rsync -a src/ cache
 
-	docker $DOCKER_OPTS pull $DOCKER_REGISTRY/afcowie/debian:jessie
 	docker $DOCKER_OPTS pull $DOCKER_REGISTRY/engineering/haskell:latest
 	touch cache/stamp/initialize
 }
@@ -73,10 +72,16 @@ baseline () {
 	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t \
 		-v ${PWD}/cache:/src:rw \
 		"$DOCKER_REGISTRY/engineering/haskell" \
-		"/bin/bash" -c "/src/baseline ; chown -R $USER /src"
+		"/bin/bash" -c "/src/baseline && chown -R $USER /src"
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
-		echo "Build returned nonzero exit status, bailing out."
+	    echo "Build returned nonzero exit status, bailing out."
+	    # Fix access privileges
+	    docker $DOCKER_OPTS run --rm \
+	        -v ${PWD}/cache:/src:rw \
+		"$DOCKER_REGISTRY/engineering/haskell" \
+		"/bin/bash" -c "chown -R $USER /src"
+	    exit 1
 	fi
 	docker $DOCKER_OPTS commit "$IMAGE_NAME" "$DOCKER_REGISTRY/engineering/${NAME}:baseline"
 	docker $DOCKER_OPTS rm "$IMAGE_NAME"
@@ -96,11 +101,17 @@ objects () {
 	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t \
 	        -v ${PWD}/cache:/src:rw \
 	        $DOCKER_REGISTRY/engineering/${NAME}:baseline \
-	        "/bin/bash" -c "/src/objects ; chown -R $USER /src"
+	        "/bin/bash" -c "/src/objects && chown -R $USER /src"
 
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
-		echo "Build returned nonzero exit status, bailing out."
+	    echo "Build returned nonzero exit status, bailing out."
+	    # Fix access privileges
+	    docker $DOCKER_OPTS run --rm \
+	        -v ${PWD}/cache:/src:rw \
+		"$DOCKER_REGISTRY/engineering/haskell" \
+		"/bin/bash" -c "chown -R $USER /src"
+	    exit 1
 	fi
 	docker $DOCKER_OPTS commit "$IMAGE_NAME" "$DOCKER_REGISTRY/engineering/${NAME}:objects"
 	docker $DOCKER_OPTS rm "$IMAGE_NAME"
@@ -120,10 +131,16 @@ release () {
 	docker $DOCKER_OPTS run --name="$IMAGE_NAME" -t \
 	       -v ${PWD}/cache:/src:rw \
 	       $DOCKER_REGISTRY/afcowie/debian:jessie \
-	       "/bin/bash" -c "/src/release ; chown -R $USER /src"
+	       "/bin/bash" -c "/src/release && chown -R $USER /src"
 	RC=$(docker $DOCKER_OPTS wait "$IMAGE_NAME")
 	if [ $RC -ne 0 ]; then
-		echo "Build returned nonzero exit status, bailing out."
+	    echo "Build returned nonzero exit status, bailing out."
+	    # Fix access privileges
+	    docker $DOCKER_OPTS run --rm \
+	        -v ${PWD}/cache:/src:rw \
+		"$DOCKER_REGISTRY/engineering/haskell" \
+		"/bin/bash" -c "chown -R $USER /src"
+		exit 1
 	fi
 	docker $DOCKER_OPTS commit "$IMAGE_NAME" "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}"
 	docker $DOCKER_OPTS rm "$IMAGE_NAME"
