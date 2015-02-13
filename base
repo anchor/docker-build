@@ -133,6 +133,9 @@ release () {
 	       "/bin/bash" -c "/src/release && chown -R $USER /src"
 	bailout_on_failure "$IMAGE_NAME"
 	docker $DOCKER_OPTS commit "$IMAGE_NAME" "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}"
+	# Tag the built image with the branch.
+	docker $DOCKER_OPTS tag -f "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
+	       "$DOCKER_REGISTRY/engineering/${NAME}:${GIT_BRANCH}"
 	docker $DOCKER_OPTS rm "$IMAGE_NAME"
 	touch cache/stamp/release
 }
@@ -157,10 +160,7 @@ publish () {
 			"$DOCKER_REGISTRY/engineering/${NAME}:latest"
 		docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:latest"
 	else
-		# Tag the built image with the branch.
 		echo "Pushing the topic branch $GIT_BRANCH to docker as '$NAME:$GIT_BRANCH'"
-		docker $DOCKER_OPTS tag -f "$DOCKER_REGISTRY/engineering/${NAME}:${VERSION}" \
-			"$DOCKER_REGISTRY/engineering/${NAME}:${GIT_BRANCH}"
 		docker $DOCKER_OPTS push "$DOCKER_REGISTRY/engineering/${NAME}:${GIT_BRANCH}"
 	fi
 
